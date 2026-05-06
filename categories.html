@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Categories – Cinemania</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a class="nav-logo" href="/">🎬 CINEMANIA</a>
+  <div class="nav-links"><a href="/">Home</a><a href="movies.html">Movies</a><a href="series.html">Series</a><a href="categories.html" class="active">Categories</a></div>
+  <div class="nav-right">
+    <div data-auth="logged-out"><button class="btn btn-primary btn-sm" onclick="openAuthModal()">Sign In</button></div>
+    <div data-auth="logged-in" class="hidden"><div class="avatar-btn"><span class="user-avatar-init">U</span><div class="avatar-dropdown"><a href="profile.html">👤 Profile</a><a href="subscription.html">👑 Subscription</a><div class="sep"></div><a onclick="api.logout()">🚪 Logout</a></div></div></div>
+  </div>
+</nav>
+<div class="page-header"><h1>🎭 CATEGORIES</h1><p>Explore content by genre</p></div>
+<main class="section">
+  <div id="categories-list">
+    <div class="loading-center"><div class="spinner"></div></div>
+  </div>
+</main>
+<div class="modal-overlay" id="auth-modal"><div class="modal"><button class="modal-close" onclick="closeModal('auth-modal')">✕</button><div style="text-align:center;margin-bottom:1.5rem"><div style="font-size:2rem">🎬</div><div class="modal-title">CINEMANIA</div></div><div class="tabs"><button class="tab active" data-tab="login">Sign In</button><button class="tab" data-tab="register">Sign Up</button></div><form id="login-form" data-tab-content="login"><div class="form-group"><label class="form-label">Email</label><input type="email" id="login-email" class="form-input" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" id="login-password" class="form-input" required></div><button type="submit" class="btn btn-primary full-width">Login</button></form><form id="register-form" data-tab-content="register" class="hidden"><div class="form-group"><label class="form-label">Name</label><input type="text" id="reg-name" class="form-input" required></div><div class="form-group"><label class="form-label">Email</label><input type="email" id="reg-email" class="form-input" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" id="reg-password" class="form-input" required minlength="6"></div><button type="submit" class="btn btn-primary full-width">Create Account</button></form></div></div>
+<div class="modal-overlay" id="detail-modal"><div class="modal detail-modal"><button class="modal-close" onclick="closeModal('detail-modal')" style="position:fixed;top:1.5rem;right:1.5rem;z-index:99">✕</button><img class="detail-banner" src="" alt=""><div class="detail-banner-overlay"></div><div class="detail-content"><h2 class="detail-title"></h2><div class="detail-meta"></div><p class="detail-desc"></p><div class="detail-actions"><button class="btn btn-primary watch-btn">▶ Watch Now</button><button class="btn btn-secondary watchlist-btn">+ My List</button></div></div></div></div>
+<div id="toast-container"></div>
+<script src="../js/api.js"></script><script src="../js/app.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { data: cats } = await api.get('/content/categories');
+    const container = document.getElementById('categories-list');
+    for (const cat of cats) {
+      const { data } = await api.get(`/content?category=${cat.slug}&limit=8`);
+      if (!data.length) continue;
+      container.innerHTML += `
+        <section class="section" style="padding:2rem 0">
+          <div class="section-header">
+            <h2 class="section-title">${cat.icon} ${cat.name}</h2>
+            <a class="see-all" href="movies.html">See All →</a>
+          </div>
+          <div class="content-row">${data.map(makeCard).join('')}</div>
+        </section>`;
+    }
+    if (!container.children.length) container.innerHTML = '<p style="color:var(--text3);text-align:center;padding:3rem">No content available</p>';
+  } catch (err) { toast('Failed to load categories', 'error'); }
+});
+</script>
+</body>
+</html>

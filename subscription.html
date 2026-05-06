@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subscription – Cinemania</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a class="nav-logo" href="/">🎬 CINEMANIA</a>
+  <div class="nav-links"><a href="/">Home</a><a href="movies.html">Movies</a><a href="series.html">Series</a></div>
+  <div class="nav-right">
+    <div style="display:flex;align-items:center;gap:.6rem">
+      <span id="nav-plan-badge" style="display:none"></span>
+      <div class="avatar-btn"><span class="user-avatar-init">U</span>
+        <div class="avatar-dropdown">
+          <a href="profile.html">👤 Profile</a><a href="subscription.html">👑 Subscription</a>
+          <div class="sep"></div><a onclick="api.logout()" style="color:#ef4444">🚪 Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>👑 SUBSCRIPTION</h1>
+  <p>Manage your plan and unlock more content</p>
+</div>
+
+<main class="section">
+  <!-- Current plan card -->
+  <div id="current-plan-section" style="margin-bottom:3rem">
+    <h2 class="section-title" style="margin-bottom:1.5rem">Your Current Plan</h2>
+    <div id="current-plan-display"><div class="loading-center"><div class="spinner"></div></div></div>
+  </div>
+
+  <!-- What each plan unlocks -->
+  <h2 class="section-title" style="margin-bottom:1rem">What You Unlock</h2>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:3rem">
+    <div style="background:var(--card);border:1px solid rgba(56,189,248,.2);border-radius:16px;padding:1.5rem">
+      <div style="font-size:1.5rem;margin-bottom:.5rem">📺</div>
+      <div style="font-weight:800;color:#38bdf8;margin-bottom:.3rem">BASIC — ₹99/mo</div>
+      <ul style="list-style:none;font-size:.82rem;color:var(--text2);line-height:2">
+        <li>✓ All Basic content</li><li>✓ HD quality</li><li>✓ 1 screen</li><li>✗ Downloads</li>
+      </ul>
+    </div>
+    <div style="background:var(--card);border:1px solid rgba(245,197,24,.2);border-radius:16px;padding:1.5rem">
+      <div style="font-size:1.5rem;margin-bottom:.5rem">⭐</div>
+      <div style="font-weight:800;color:#f5c518;margin-bottom:.3rem">STANDARD — ₹199/mo</div>
+      <ul style="list-style:none;font-size:.82rem;color:var(--text2);line-height:2">
+        <li>✓ Basic + Standard content</li><li>✓ Full HD</li><li>✓ 2 screens</li><li>✓ Downloads</li>
+      </ul>
+    </div>
+    <div style="background:var(--card);border:1px solid rgba(139,92,246,.2);border-radius:16px;padding:1.5rem;position:relative">
+      <div style="position:absolute;top:-10px;left:1rem;background:linear-gradient(135deg,#8b5cf6,#0ea5e9);color:#fff;font-size:.65rem;font-weight:800;padding:.2rem .7rem;border-radius:20px">MOST POPULAR</div>
+      <div style="font-size:1.5rem;margin-bottom:.5rem">👑</div>
+      <div style="font-weight:800;color:#a78bfa;margin-bottom:.3rem">PREMIUM — ₹499/mo</div>
+      <ul style="list-style:none;font-size:.82rem;color:var(--text2);line-height:2">
+        <li>✓ ALL content unlocked</li><li>✓ 4K Ultra HD</li><li>✓ 4 screens</li><li>✓ Unlimited downloads</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- All plans -->
+  <h2 class="section-title" style="margin-bottom:1.5rem">Available Plans</h2>
+  <div class="plans-grid" id="plans-grid"><div class="loading-center"><div class="spinner"></div></div></div>
+
+  <!-- Billing history -->
+  <h2 class="section-title" style="margin:3rem 0 1.5rem">Billing History</h2>
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:auto">
+    <table class="admin-table">
+      <thead><tr><th>Plan</th><th>Amount</th><th>Start</th><th>End</th><th>Status</th><th>Transaction</th></tr></thead>
+      <tbody id="billing-body"><tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner"></div></td></tr></tbody>
+    </table>
+  </div>
+</main>
+
+<div class="modal-overlay" id="upgrade-modal">
+  <div class="modal" style="max-width:820px">
+    <button class="modal-close" onclick="closeModal('upgrade-modal')">✕</button>
+    <div class="upgrade-modal-header">
+      <span class="upgrade-modal-icon">👑</span>
+      <div class="upgrade-modal-title">Choose a Plan</div>
+      <div class="upgrade-modal-desc">Unlock content based on your plan level</div>
+    </div>
+    <div id="upgrade-plans-grid"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/api.js"></script><script src="../js/app.js"></script>
+<script>
+if(!api.isLoggedIn()){ window.location.href='/'; }
+
+async function loadCurrentPlan(){
+  await api.fetchAndStoreSubscription();
+  updateNavUI();
+  const sub=api.subscription();
+  const el=document.getElementById('current-plan-display');
+  const pn=getUserPlanName();
+  const pc={basic:'#38bdf8',standard:'#f5c518',premium:'#a78bfa',free:'var(--text2)'}[pn]||'var(--text2)';
+  if(sub){
+    const daysLeft=Math.max(0,Math.ceil((new Date(sub.end_date)-new Date())/(1000*60*60*24)));
+    el.innerHTML=`<div style="background:linear-gradient(135deg,rgba(229,9,20,.08),rgba(139,92,246,.08));border:1px solid ${pc}44;border-radius:20px;padding:2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <div style="font-size:.75rem;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:.3rem">Active Plan</div>
+        <div style="font-family:'Bebas Neue';font-size:2rem;color:${pc};letter-spacing:1px">${PLAN_ICONS[pn]} ${sub.plan_name}</div>
+        <div style="color:var(--text2);font-size:.88rem;margin-top:.4rem">${sub.video_quality||'HD'} · ${sub.max_screens||1} screen(s) · ${sub.downloads||sub.downloads_allowed?'Downloads ✓':'No downloads'}</div>
+        <div style="margin-top:.5rem;font-size:.82rem;color:var(--text2)">Expires <strong style="color:var(--text)">${new Date(sub.end_date).toLocaleDateString('en-IN')}</strong> &nbsp;<span style="background:rgba(34,197,94,.15);color:#22c55e;padding:.1rem .5rem;border-radius:4px;font-size:.72rem">${daysLeft} days left</span></div>
+      </div>
+      <div style="display:flex;gap:.8rem;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="cancelSub()">Cancel</button>
+        <button class="btn btn-primary btn-sm" onclick="openUpgradeModal('premium')">Upgrade Plan</button>
+      </div>
+    </div>`;
+  } else {
+    el.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2rem;text-align:center">
+      <div style="font-size:3rem;margin-bottom:1rem">📺</div>
+      <div style="font-size:1.1rem;font-weight:600;margin-bottom:.5rem">No Active Subscription</div>
+      <p style="color:var(--text2);margin-bottom:1.5rem">You're on the Free plan. Upgrade to unlock <strong>Standard</strong> and <strong>Premium</strong> content.</p>
+      <button class="btn btn-primary" onclick="openUpgradeModal('basic')">Choose a Plan</button>
+    </div>`;
+  }
+}
+
+async function loadAllPlans(){
+  try{
+    const raw=await api.get('/subscriptions/plans');
+    const plans=Array.isArray(raw)?raw:(raw.data||[]);
+    const currentPlan=getUserPlanName();
+    const pc={basic:'#38bdf8',standard:'#f5c518',premium:'#a78bfa',free:'var(--text2)'};
+    document.getElementById('plans-grid').innerHTML=plans.map((p,i)=>{
+      const pn=p.name.toLowerCase();
+      const isCurr=pn===currentPlan;
+      const c=pc[pn]||'#38bdf8';
+      return `<div class="plan-card ${i===2?'popular':''} ${isCurr?'current-plan':''}">
+        ${i===2&&!isCurr?'<div class="plan-popular-badge">⭐ MOST POPULAR</div>':''}
+        ${isCurr?'<div class="plan-popular-badge" style="background:linear-gradient(135deg,#22c55e,#16a34a)">✓ YOUR PLAN</div>':''}
+        <div class="plan-icon">${PLAN_ICONS[pn]}</div>
+        <div class="plan-name" style="color:${c}">${p.name}</div>
+        <div class="plan-price"><sup>₹</sup>${p.price}<span>/mo</span></div>
+        <div class="plan-period">${p.duration_days} days</div>
+        <ul class="plan-features">
+          <li><span class="check">✓</span> ${p.video_quality}</li>
+          <li><span class="check">✓</span> ${p.max_screens} Screen(s)</li>
+          <li>${(p.downloads||p.downloads_allowed)?'<span class="check">✓</span>':'<span class="cross">✗</span>'} Downloads</li>
+        </ul>
+        <button class="btn full-width btn-sm ${isCurr?'btn-secondary':'btn-primary'}"
+          style="${!isCurr?`background:linear-gradient(135deg,${c},${c}88)`:''}"
+          onclick="subscribePlan(${p.id},'${p.name}',${p.price})" ${isCurr?'disabled':''}>
+          ${isCurr?'✓ Current Plan':(p.price==0?'Get Free':`Upgrade ₹${p.price}/mo`)}
+        </button>
+      </div>`;
+    }).join('');
+  }catch{}
+}
+
+async function loadBilling(){
+  try{
+    const raw=await api.get('/subscriptions/my');
+    const data=Array.isArray(raw)?raw:(raw.data||[]);
+    const tbody=document.getElementById('billing-body');
+    if(!data.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text3)">No history</td></tr>';return;}
+    tbody.innerHTML=data.map(s=>`<tr>
+      <td><strong>${s.plan_name}</strong></td><td>₹${s.amount_paid}</td>
+      <td>${new Date(s.start_date).toLocaleDateString('en-IN')}</td>
+      <td>${new Date(s.end_date).toLocaleDateString('en-IN')}</td>
+      <td><span class="status-badge status-${s.status}">${s.status.toUpperCase()}</span></td>
+      <td style="font-size:.72rem;color:var(--text3)">${s.transaction_id||'—'}</td>
+    </tr>`).join('');
+  }catch{}
+}
+
+async function cancelSub(){
+  if(!confirm('Cancel your subscription? You will lose access to paid content.'))return;
+  try{
+    await api.put('/subscriptions/cancel');
+    toast('Subscription cancelled','info');
+    await loadCurrentPlan();loadBilling();
+  }catch(e){toast(e.message,'error');}
+}
+
+document.addEventListener('DOMContentLoaded',()=>{loadCurrentPlan();loadAllPlans();loadBilling();});
+</script>
+</body>
+</html>

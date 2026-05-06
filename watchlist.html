@@ -1,0 +1,61 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My List – Cinemania</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a class="nav-logo" href="/">🎬 CINEMANIA</a>
+  <div class="nav-links"><a href="/">Home</a><a href="movies.html">Movies</a><a href="series.html">Series</a><a href="watchlist.html" class="active">My List</a></div>
+  <div class="nav-right">
+    <div class="avatar-btn"><span class="user-avatar-init">U</span><div class="avatar-dropdown"><a href="profile.html">👤 Profile</a><a href="subscription.html">👑 Subscription</a><div class="sep"></div><a onclick="api.logout()">🚪 Logout</a></div></div>
+  </div>
+</nav>
+<div class="page-header"><h1>📋 MY LIST</h1><p>Your saved movies and shows</p></div>
+<main class="section">
+  <div id="watchlist-empty" class="hidden" style="text-align:center;padding:4rem;color:var(--text2)">
+    <div style="font-size:4rem;margin-bottom:1rem">📭</div>
+    <p style="font-size:1.1rem;margin-bottom:1.5rem">Your watchlist is empty</p>
+    <a href="movies.html" class="btn btn-primary">Browse Movies</a>
+  </div>
+  <div class="content-grid" id="watchlist-grid"><div class="loading-center" style="grid-column:1/-1"><div class="spinner"></div></div></div>
+</main>
+<div class="modal-overlay" id="detail-modal"><div class="modal detail-modal"><button class="modal-close" onclick="closeModal('detail-modal')" style="position:fixed;top:1.5rem;right:1.5rem;z-index:99">✕</button><img class="detail-banner" src="" alt=""><div class="detail-banner-overlay"></div><div class="detail-content"><h2 class="detail-title"></h2><div class="detail-meta"></div><p class="detail-desc"></p><div class="detail-actions"><button class="btn btn-primary watch-btn">▶ Watch Now</button><button class="btn btn-secondary watchlist-btn">+ My List</button></div></div></div></div>
+<div id="toast-container"></div>
+<script src="../js/api.js"></script><script src="../js/app.js"></script>
+<script>
+if (!api.isLoggedIn()) window.location.href = '/';
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { data } = await api.get('/users/watchlist');
+    const grid = document.getElementById('watchlist-grid');
+    if (!data.length) { grid.classList.add('hidden'); document.getElementById('watchlist-empty').classList.remove('hidden'); return; }
+    grid.innerHTML = data.map(item => `
+      <div class="content-card" onclick="openDetail(${item.id})">
+        <img src="${item.thumbnail_url}" alt="${item.title}" loading="lazy" onerror="this.src='https://picsum.photos/seed/${item.id}/400/600'">
+        <div class="card-overlay">
+          <div class="card-play">▶</div>
+          <div class="card-title">${item.title}</div>
+          <div class="card-meta"><span>${item.type}</span><span>${item.release_year || ''}</span></div>
+        </div>
+        <button onclick="event.stopPropagation();removeFromList(${item.id},this)" style="position:absolute;top:.5rem;right:.5rem;background:rgba(0,0,0,.7);border:none;color:#fff;width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:.8rem" title="Remove">✕</button>
+      </div>`).join('');
+  } catch { toast('Failed to load watchlist', 'error'); }
+});
+
+async function removeFromList(id, btn) {
+  try {
+    await api.del(`/users/watchlist/${id}`);
+    btn.closest('.content-card').remove();
+    toast('Removed from list', 'info');
+  } catch {}
+}
+</script>
+</body>
+</html>
+
+<!-- UPGRADE MODAL -->
+<div class="modal-overlay" id="upgrade-modal"><div class="modal" style="max-width:820px"><button class="modal-close" onclick="closeModal('upgrade-modal')">✕</button><div class="upgrade-modal-header"><span class="upgrade-modal-icon">🔒</span><div class="upgrade-modal-title">Upgrade Required</div><div class="upgrade-modal-desc">Upgrade your plan to watch this content</div></div><div id="upgrade-plans-grid"></div><div style="text-align:center;margin-top:1rem"><a onclick="closeModal('upgrade-modal');openPlansModal()" style="color:var(--text2);font-size:.82rem;cursor:pointer;text-decoration:underline">View full plan comparison →</a></div></div></div>
+<div class="modal-overlay" id="plans-modal"><div class="modal" style="max-width:900px"><button class="modal-close" onclick="closeModal('plans-modal')">✕</button><div class="modal-title plans-modal-title">CHOOSE YOUR PLAN</div><div class="modal-subtitle">Unlock all content. Cancel anytime.</div><div class="plans-grid" id="plans-grid"></div></div></div>

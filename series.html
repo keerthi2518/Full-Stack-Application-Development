@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Series – Cinemania</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a class="nav-logo" href="/">🎬 CINEMANIA</a>
+  <div class="nav-links"><a href="/">Home</a><a href="movies.html">Movies</a><a href="series.html" class="active">Series</a><a href="categories.html">Categories</a><a data-auth="logged-in" href="watchlist.html" class="hidden">My List</a></div>
+  <div class="nav-right">
+    <div data-auth="logged-out"><button class="btn btn-primary btn-sm" onclick="openAuthModal()">Sign In</button></div>
+    <div data-auth="logged-in" class="hidden" style="display:flex;align-items:center;gap:.6rem">
+      <span id="nav-plan-badge" style="display:none"></span>
+      <div class="avatar-btn"><span class="user-avatar-init">U</span>
+        <div class="avatar-dropdown">
+          <div style="padding:.6rem 1rem .3rem;font-size:.75rem;font-weight:700;color:var(--text3)">ACCOUNT</div>
+          <div style="padding:.3rem 1rem .6rem;font-size:.8rem;color:var(--text2)" id="dropdown-plan-info"></div>
+          <div class="sep"></div>
+          <a href="profile.html">👤 Profile</a><a href="subscription.html">👑 Subscription</a>
+          <div class="sep"></div><a onclick="api.logout()" style="color:#ef4444">🚪 Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div id="tier-banner" style="display:none;background:linear-gradient(90deg,rgba(229,9,20,.12),rgba(139,92,246,.12));border-bottom:1px solid rgba(229,9,20,.2);padding:.7rem 5%;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-top:70px">
+  <div style="font-size:.85rem;color:var(--text2)">🔒 <strong style="color:var(--text)">Premium series locked.</strong> Upgrade to unlock all content.</div>
+  <button class="btn btn-primary btn-sm" onclick="openPlansModal()">View Plans →</button>
+</div>
+
+<div class="page-header" style="padding-top:4rem">
+  <h1>📺 WEB SERIES</h1>
+  <p>Binge-worthy series — some episodes require a subscription</p>
+</div>
+
+<main class="section">
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.5rem;align-items:center">
+    <span style="font-size:.78rem;color:var(--text3)">Tier:</span>
+    <span style="background:rgba(56,189,248,.12);color:#38bdf8;padding:.2rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;border:1px solid rgba(56,189,248,.2)">📺 BASIC</span>
+    <span style="background:rgba(245,197,24,.12);color:#f5c518;padding:.2rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;border:1px solid rgba(245,197,24,.2)">⭐ STANDARD</span>
+    <span style="background:rgba(167,139,250,.12);color:#a78bfa;padding:.2rem .7rem;border-radius:20px;font-size:.72rem;font-weight:700;border:1px solid rgba(167,139,250,.2)">👑 PREMIUM</span>
+    <span style="color:var(--text3);font-size:.75rem">🔒 = locked</span>
+  </div>
+  <div class="filter-bar" id="series-filters"><button class="filter-pill active" onclick="filterSeries(this,'')">All</button></div>
+  <div class="content-grid" id="series-grid"><div class="loading-center" style="grid-column:1/-1"><div class="spinner"></div></div></div>
+</main>
+
+<div id="toast-container"></div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="auth-modal"><div class="modal"><button class="modal-close" onclick="closeModal('auth-modal')">✕</button><div style="text-align:center;margin-bottom:1.5rem"><div style="font-size:2rem">🎬</div><div class="modal-title">CINEMANIA</div></div><div class="tabs"><button class="tab active" data-tab="login">Sign In</button><button class="tab" data-tab="register">Sign Up</button></div><form id="login-form" data-tab-content="login"><div class="form-group"><label class="form-label">Email</label><input type="email" id="login-email" class="form-input" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" id="login-password" class="form-input" required></div><button type="submit" class="btn btn-primary full-width">Sign In</button></form><form id="register-form" data-tab-content="register" class="hidden"><div class="form-group"><label class="form-label">Name</label><input type="text" id="reg-name" class="form-input" required></div><div class="form-group"><label class="form-label">Email</label><input type="email" id="reg-email" class="form-input" required></div><div class="form-group"><label class="form-label">Password</label><input type="password" id="reg-password" class="form-input" required minlength="6"></div><button type="submit" class="btn btn-primary full-width">Create Account</button></form></div></div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal"><div class="modal detail-modal" style="position:relative"><button class="modal-close" onclick="closeModal('detail-modal')" style="position:fixed;top:1.5rem;right:1.5rem;z-index:99">✕</button><img class="detail-banner" src="" alt="" style="width:100%;aspect-ratio:16/7;object-fit:cover;display:block"><div class="detail-banner-overlay"></div><div class="detail-content"><h2 class="detail-title"></h2><div class="detail-meta"></div><p class="detail-desc"></p><div class="detail-actions" style="display:flex;gap:1rem;flex-wrap:wrap"><button class="btn btn-primary watch-btn">▶ Watch Now</button><button class="btn btn-secondary watchlist-btn">+ My List</button></div></div></div></div>
+
+<!-- PLANS MODAL -->
+<div class="modal-overlay" id="plans-modal"><div class="modal" style="max-width:900px"><button class="modal-close" onclick="closeModal('plans-modal')">✕</button><div class="modal-title plans-modal-title">CHOOSE YOUR PLAN</div><div class="modal-subtitle">Unlock all content. Cancel anytime.</div><div class="plans-grid" id="plans-grid"></div></div></div>
+
+<!-- UPGRADE MODAL -->
+<div class="modal-overlay" id="upgrade-modal"><div class="modal" style="max-width:820px"><button class="modal-close" onclick="closeModal('upgrade-modal')">✕</button><div class="upgrade-modal-header"><span class="upgrade-modal-icon">🔒</span><div class="upgrade-modal-title">Upgrade Required</div><div class="upgrade-modal-desc">Upgrade your plan to watch this content</div></div><div id="upgrade-plans-grid"></div><div style="text-align:center;margin-top:1rem"><a onclick="closeModal('upgrade-modal');openPlansModal()" style="color:var(--text2);font-size:.82rem;cursor:pointer;text-decoration:underline">View full plan comparison →</a></div></div></div>
+
+<script src="../js/api.js"></script><script src="../js/app.js"></script>
+<script>
+let activeCat = '';
+async function loadSeries() {
+  try {
+    const raw = await api.get(`/content?type=series&limit=30${activeCat ? '&genre=' + activeCat : ''}`);
+    const items = Array.isArray(raw) ? raw : (raw.data || []);
+    document.getElementById('series-grid').innerHTML = items.length
+      ? items.map(makeCard).join('')
+      : '<p style="color:var(--text3);padding:2rem;text-align:center;grid-column:1/-1">No series found</p>';
+  } catch {}
+}
+function filterSeries(btn, val) {
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active'); activeCat = val; loadSeries();
+}
+document.addEventListener('DOMContentLoaded', async () => {
+  if (api.isLoggedIn()) {
+    await api.fetchAndStoreSubscription(); updateNavUI();
+    if (getUserPlanLevel() === 0) document.getElementById('tier-banner').style.display = 'flex';
+  } else {
+    document.getElementById('tier-banner').style.display = 'flex';
+  }
+  try {
+    const raw = await api.get('/content?type=series&limit=100');
+    const items = Array.isArray(raw) ? raw : (raw.data || []);
+    const genres = [...new Set(items.map(i => i.genre).filter(Boolean))];
+    const bar = document.getElementById('series-filters');
+    genres.forEach(g => { bar.innerHTML += `<button class="filter-pill" onclick="filterSeries(this,'${g}')">${g}</button>`; });
+  } catch {}
+  loadSeries();
+});
+</script>
+</body>
+</html>

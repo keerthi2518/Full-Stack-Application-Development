@@ -1,0 +1,249 @@
+<!DOCTYPE>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – Cinemania</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+
+<nav class="navbar" id="navbar">
+  <a class="nav-logo" href="/">🎬 CINEMANIA</a>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="admin.html" class="active">Admin Panel</a>
+  </div>
+  <div class="nav-right">
+    <div class="avatar-btn">
+      <span class="user-avatar-init">A</span>
+      <div class="avatar-dropdown">
+        <a href="profile.html">👤 Profile</a>
+        <div class="sep"></div>
+        <a onclick="api.logout()">🚪 Logout</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>⚙️ ADMIN PANEL</h1>
+  <p>Manage content, users, and subscriptions</p>
+</div>
+
+<main class="section">
+  <!-- STATS -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value" id="stat-users">—</div></div>
+    <div class="stat-card"><div class="stat-label">Active Subs</div><div class="stat-value" id="stat-subs">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Content</div><div class="stat-value" id="stat-content">—</div></div>
+    <div class="stat-card"><div class="stat-label">Total Revenue</div><div class="stat-value" id="stat-revenue">—</div><div class="stat-sub">All time</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs" style="max-width:500px">
+    <button class="tab active" onclick="showTab('content-tab',this)">🎬 Content</button>
+    <button class="tab" onclick="showTab('users-tab',this)">👥 Users</button>
+    <button class="tab" onclick="showTab('subs-tab',this)">👑 Subscriptions</button>
+  </div>
+
+  <!-- CONTENT TAB -->
+  <div id="content-tab">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem">
+      <h3 style="font-size:1rem;font-weight:700">All Content</h3>
+      <button class="btn btn-primary btn-sm" onclick="openModal('add-content-modal')">+ Add Content</button>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:auto">
+      <table class="admin-table">
+        <thead><tr><th>ID</th><th>Title</th><th>Type</th><th>Plan</th><th>Views</th><th>Rating</th><th>Actions</th></tr></thead>
+        <tbody id="content-table-body"><tr><td colspan="7" style="text-align:center;padding:2rem"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- USERS TAB -->
+  <div id="users-tab" class="hidden">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:auto">
+      <table class="admin-table">
+        <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Plan</th><th>Status</th><th>Joined</th></tr></thead>
+        <tbody id="users-table-body"><tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUBS TAB -->
+  <div id="subs-tab" class="hidden">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:auto">
+      <table class="admin-table">
+        <thead><tr><th>User</th><th>Email</th><th>Plan</th><th>Amount</th><th>End Date</th><th>Status</th></tr></thead>
+        <tbody id="subs-table-body"><tr><td colspan="6" style="text-align:center;padding:2rem"><div class="spinner"></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- ADD CONTENT MODAL -->
+<div class="modal-overlay" id="add-content-modal">
+  <div class="modal" style="max-width:650px">
+    <button class="modal-close" onclick="closeModal('add-content-modal')">✕</button>
+    <div class="modal-title">ADD CONTENT</div>
+    <div class="modal-subtitle">Add a new movie or series to the platform</div>
+    <form id="add-content-form">
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Title *</label><input type="text" id="c-title" class="form-input" required></div>
+        <div class="form-group"><label class="form-label">Type *</label>
+          <select id="c-type" class="form-input"><option value="movie">Movie</option><option value="series">Series</option><option value="documentary">Documentary</option></select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Description</label><textarea id="c-desc" class="form-input" rows="3"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Category ID</label><input type="number" id="c-cat" class="form-input" placeholder="1-10"></div>
+        <div class="form-group"><label class="form-label">Language</label><input type="text" id="c-lang" class="form-input" placeholder="English"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Release Year</label><input type="number" id="c-year" class="form-input" placeholder="2024"></div>
+        <div class="form-group"><label class="form-label">Duration (mins)</label><input type="number" id="c-dur" class="form-input" placeholder="120"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Thumbnail URL</label><input type="url" id="c-thumb" class="form-input" placeholder="https://..."></div>
+      <div class="form-group"><label class="form-label">Banner URL</label><input type="url" id="c-banner" class="form-input" placeholder="https://..."></div>
+      <div class="form-row">
+        <div class="form-group"><label class="form-label">Minimum Plan</label>
+          <select id="c-plan" class="form-input"><option value="free">Free</option><option value="basic" selected>Basic</option><option value="standard">Standard</option><option value="premium">Premium</option></select>
+        </div>
+        <div class="form-group" style="display:flex;gap:.5rem;align-items:center;padding-top:1.8rem">
+          <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer"><input type="checkbox" id="c-featured"> Featured</label>
+          <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer"><input type="checkbox" id="c-trending"> Trending</label>
+          <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer"><input type="checkbox" id="c-new" checked> New</label>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary full-width" style="margin-top:.5rem">Add Content</button>
+    </form>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+// Guard: admin only
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!api.isLoggedIn()) { window.location.href = '/'; return; }
+  const user = api.user();
+  if (user.role !== 'admin') { toast('Admin access required', 'error'); setTimeout(() => window.location.href = '/', 1500); return; }
+
+  loadStats();
+  loadContentTable();
+});
+
+function showTab(tabId, btn) {
+  ['content-tab','users-tab','subs-tab'].forEach(t => document.getElementById(t).classList.toggle('hidden', t !== tabId));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+
+  if (tabId === 'users-tab') loadUsersTable();
+  if (tabId === 'subs-tab') loadSubsTable();
+}
+
+async function loadStats() {
+  try {
+    const { data } = await api.get('/users/admin/stats');
+    document.getElementById('stat-users').textContent = data.total_users;
+    document.getElementById('stat-subs').textContent = data.active_subs;
+    document.getElementById('stat-content').textContent = data.total_content;
+    document.getElementById('stat-revenue').textContent = '₹' + parseFloat(data.total_revenue).toLocaleString('en-IN');
+  } catch {}
+}
+
+async function loadContentTable() {
+  try {
+    const { data } = await api.get('/content?limit=100');
+    const tbody = document.getElementById('content-table-body');
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td style="color:var(--text3)">${c.id}</td>
+        <td><strong>${c.title}</strong></td>
+        <td><span class="detail-tag" style="background:rgba(255,255,255,.08);border-radius:4px;padding:.15rem .5rem;font-size:.75rem">${c.type}</span></td>
+        <td style="color:var(--text2);font-size:.8rem;text-transform:uppercase">${c.minimum_plan}</td>
+        <td style="color:var(--text2)">${c.views || 0}</td>
+        <td>${c.rating ? '⭐ ' + c.rating : '—'}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" onclick="deleteContent(${c.id},'${c.title.replace(/'/g, "\\'")}')">🗑 Delete</button>
+        </td>
+      </tr>`).join('');
+  } catch (err) { toast('Failed to load content', 'error'); }
+}
+
+async function loadUsersTable() {
+  try {
+    const { data } = await api.get('/users/admin/all');
+    const tbody = document.getElementById('users-table-body');
+    tbody.innerHTML = data.map(u => `
+      <tr>
+        <td style="color:var(--text3)">${u.id}</td>
+        <td><strong>${u.name}</strong></td>
+        <td style="color:var(--text2)">${u.email}</td>
+        <td style="color:var(--text2)">${u.plan_name || '—'}</td>
+        <td><span class="status-badge ${u.sub_status === 'active' ? 'status-active' : 'status-expired'}">${u.sub_status || 'Free'}</span></td>
+        <td style="color:var(--text3);font-size:.8rem">${new Date(u.created_at).toLocaleDateString()}</td>
+      </tr>`).join('');
+  } catch {}
+}
+
+async function loadSubsTable() {
+  try {
+    const { data } = await api.get('/subscriptions/admin/all');
+    const tbody = document.getElementById('subs-table-body');
+    tbody.innerHTML = data.map(s => `
+      <tr>
+        <td><strong>${s.user_name}</strong></td>
+        <td style="color:var(--text2)">${s.email}</td>
+        <td>${s.plan_name}</td>
+        <td>₹${s.amount_paid}</td>
+        <td style="color:var(--text2)">${new Date(s.end_date).toLocaleDateString()}</td>
+        <td><span class="status-badge status-${s.status}">${s.status.toUpperCase()}</span></td>
+      </tr>`).join('');
+  } catch {}
+}
+
+async function deleteContent(id, title) {
+  if (!confirm(`Delete "${title}"?`)) return;
+  try {
+    await api.del(`/content/${id}`);
+    toast('Content deleted', 'success');
+    loadContentTable();
+    loadStats();
+  } catch (err) { toast(err.message, 'error'); }
+}
+
+document.getElementById('add-content-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.disabled = true; btn.textContent = 'Adding...';
+  try {
+    await api.post('/content', {
+      title: document.getElementById('c-title').value,
+      description: document.getElementById('c-desc').value,
+      type: document.getElementById('c-type').value,
+      category_id: document.getElementById('c-cat').value || null,
+      language: document.getElementById('c-lang').value || 'English',
+      release_year: document.getElementById('c-year').value || null,
+      duration_minutes: document.getElementById('c-dur').value || null,
+      thumbnail_url: document.getElementById('c-thumb').value,
+      banner_url: document.getElementById('c-banner').value,
+      minimum_plan: document.getElementById('c-plan').value,
+      is_featured: document.getElementById('c-featured').checked ? 1 : 0,
+      is_trending: document.getElementById('c-trending').checked ? 1 : 0,
+      is_new: document.getElementById('c-new').checked ? 1 : 0,
+    });
+    toast('Content added successfully!', 'success');
+    closeModal('add-content-modal');
+    e.target.reset();
+    loadContentTable();
+    loadStats();
+  } catch (err) { toast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = 'Add Content'; }
+});
+</script>
+</body>
+</html>

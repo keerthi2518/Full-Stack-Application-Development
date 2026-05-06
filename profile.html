@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile – Cinemania</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<nav class="navbar" id="navbar">
+  <a class="nav-logo" href="/">🎬 CINEMANIA</a>
+  <div class="nav-links"><a href="/">Home</a><a href="movies.html">Movies</a><a href="series.html">Series</a></div>
+  <div class="nav-right">
+    <div class="avatar-btn"><span class="user-avatar-init">U</span>
+      <div class="avatar-dropdown">
+        <a href="profile.html">👤 Profile</a><a href="subscription.html">👑 Subscription</a>
+        <div class="sep"></div><a onclick="api.logout()">🚪 Logout</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div class="page-header">
+  <h1>👤 MY PROFILE</h1><p>Manage your account settings</p>
+</div>
+
+<main class="section" style="max-width:700px">
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:2rem;margin-bottom:2rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap">
+    <div style="width:80px;height:80px;border-radius:50%;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#fff;flex-shrink:0" id="profile-avatar">U</div>
+    <div>
+      <div style="font-family:'Bebas Neue';font-size:1.8rem;letter-spacing:1px" id="profile-name">Loading...</div>
+      <div style="color:var(--text2)" id="profile-email"></div>
+      <div style="margin-top:.5rem" id="profile-plan"><span style="background:rgba(229,9,20,.15);color:var(--red2);padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700">FREE</span></div>
+    </div>
+    <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="document.getElementById('subscription-section').scrollIntoView({behavior:'smooth'})">Upgrade Plan</button>
+  </div>
+
+  <!-- Edit Profile -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:2rem;margin-bottom:1.5rem">
+    <h3 style="font-weight:700;margin-bottom:1.5rem;font-size:1rem">Edit Profile</h3>
+    <form id="profile-form">
+      <div class="form-group"><label class="form-label">Display Name</label><input type="text" id="profile-name-input" class="form-input" required></div>
+      <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+    </form>
+  </div>
+
+  <!-- Change Password -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:2rem;margin-bottom:1.5rem">
+    <h3 style="font-weight:700;margin-bottom:1.5rem;font-size:1rem">Change Password</h3>
+    <form id="password-form">
+      <div class="form-group"><label class="form-label">Current Password</label><input type="password" id="curr-pass" class="form-input" required></div>
+      <div class="form-group"><label class="form-label">New Password</label><input type="password" id="new-pass" class="form-input" required minlength="6"></div>
+      <button type="submit" class="btn btn-primary btn-sm">Change Password</button>
+    </form>
+  </div>
+
+  <!-- Subscription info -->
+  <div id="subscription-section" style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius2);padding:2rem">
+    <h3 style="font-weight:700;margin-bottom:1rem;font-size:1rem">Subscription</h3>
+    <div id="sub-info"><div class="spinner"></div></div>
+  </div>
+</main>
+
+<div id="toast-container"></div>
+<script src="../js/api.js"></script>
+<script src="../js/app.js"></script>
+<script>
+if (!api.isLoggedIn()) window.location.href = '/';
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const { user } = await api.get('/auth/me');
+    document.getElementById('profile-name').textContent = user.name;
+    document.getElementById('profile-email').textContent = user.email;
+    document.getElementById('profile-avatar').textContent = user.name[0].toUpperCase();
+    document.getElementById('profile-name-input').value = user.name;
+    if (user.plan_name) {
+      document.getElementById('profile-plan').innerHTML = `<span style="background:rgba(229,9,20,.15);color:var(--red2);padding:.2rem .7rem;border-radius:20px;font-size:.75rem;font-weight:700">${user.plan_name.toUpperCase()}</span>`;
+    }
+    document.getElementById('sub-info').innerHTML = user.plan_name
+      ? `<p>Active Plan: <strong>${user.plan_name}</strong> · Expires: <strong>${new Date(user.sub_end).toLocaleDateString()}</strong></p>
+         <a href="subscription.html" class="btn btn-outline btn-sm" style="margin-top:1rem;display:inline-flex">Manage Subscription</a>`
+      : `<p style="color:var(--text2)">No active subscription</p>
+         <a href="subscription.html" class="btn btn-primary btn-sm" style="margin-top:1rem;display:inline-flex">View Plans</a>`;
+  } catch (err) { toast('Failed to load profile', 'error'); }
+});
+
+document.getElementById('profile-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    await api.put('/users/profile', { name: document.getElementById('profile-name-input').value });
+    toast('Profile updated!', 'success');
+    const u = api.user(); u.name = document.getElementById('profile-name-input').value;
+    localStorage.setItem('cinemania_user', JSON.stringify(u));
+  } catch (err) { toast(err.message, 'error'); }
+});
+
+document.getElementById('password-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  try {
+    await api.put('/users/change-password', {
+      currentPassword: document.getElementById('curr-pass').value,
+      newPassword: document.getElementById('new-pass').value
+    });
+    toast('Password changed!', 'success');
+    e.target.reset();
+  } catch (err) { toast(err.message, 'error'); }
+});
+</script>
+</body>
+</html>
